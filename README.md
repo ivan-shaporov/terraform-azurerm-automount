@@ -3,20 +3,40 @@
 
 ## Automount managed disks
 
-This module automaticallymounts managed disks. 
+This module creates a VM and automaticallymounts managed disks. 
 
 ## Usage
 
 
 ```hcl
-module "automount" {
-  source               = "Azure/automount/azurerm"
-  resource_group_name  = "resourcegroup1"
+resource "random_id" "rg_name" {
+  byte_length = 8
+}
 
-  tags = {
-    environment = "dev"
-    costcenter  = "it"
-  }
+resource "azurerm_resource_group" "rg" {
+  name     = "${random_id.rg_name.hex}"
+  location = "${var.location}"
+}
+
+module "vm-with-provisioner" {
+  source              = "../.."
+  location            = "${var.location}"
+  vm_os_simple        = "UbuntuServer"
+  public_ip_dns       = ["testautomount"] // change to a unique name per datacenter region
+  public_ip_address_allocation = "static" // workaround for the issue with vm dynamic IP-s
+  vnet_subnet_id      = "${module.network.vnet_subnets[0]}"
+  ssh_key             = "~/.ssh/id_rsa.pub" 
+  private_ssh_key     = "~/.ssh/id_rsa" 
+  resource_group_name = "${azurerm_resource_group.rg.name}"
+}
+
+module "network" {
+  source              = "Azure/network/azurerm"
+  version             = "~> 1.1.1"
+  location            = "${var.location}"
+  allow_rdp_traffic   = "true"
+  allow_ssh_traffic   = "true"
+  resource_group_name = "${azurerm_resource_group.rg.name}"
 }
 
 ```
