@@ -87,13 +87,10 @@ resource "azurerm_virtual_machine" "vm-linux" {
       host = "${azurerm_public_ip.vm.ip_address}"
       type = "ssh"
       user = "${var.admin_username}"
-      #private_key = "${file("C:\\Users\\ivshapo\\AppData\\Local\\Packages\\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\\LocalState\\rootfs\\home\\ivan\\.ssh\\id_rsa")}"
       private_key = "${file("${var.private_ssh_key}")}"
     }
   
-    inline = [
-      "echo test >> test.txt",  // todo: add disk mount script
-    ]
+    script = "${path.module}/mount.sh"
   }
 }
 
